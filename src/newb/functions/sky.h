@@ -209,54 +209,115 @@ vec3 nlRenderGalaxy(vec3 vdir, vec3 fogColor, nl_environment env, float t) {
 }
 
 // ========================================
-// KRISPY COMPLEMENTARY-STYLE AURORA
+// KRISPY BLOCKY AURORA (Minecraft Style)
 // ========================================
 #ifdef NL_AURORA
 
-float auroraNoise(vec2 uv, float time) {
-    float n = 0.0;
-    n += sin(uv.x * 2.0 + time * 0.5) * 0.5 + 0.5;
-    n += sin(uv.x * 3.5 + time * 0.3 + sin(uv.y * 2.0)) * 0.25;
-    n += sin(uv.x * 7.0 + time * 0.7) * 0.125;
-    return n * 0.5;
+// Blocky cellular noise for geometric patterns
+float blockyNoise(vec2 uv) {
+    vec2 grid = floor(uv * 8.0);
+    vec2 frac = fract(uv * 8.0);
+    
+    float n = rand(grid);
+    n += step(0.7, rand(grid + vec2(1.0, 0.0))) * frac.x;
+    n += step(0.7, rand(grid + vec2(0.0, 1.0))) * frac.y;
+    
+    return fract(n * 3.14159);
 }
 
-float auroraRays(vec2 uv, float time, float wave) {
-    float rays = sin(uv.y * 15.0 + time * 2.0 + wave * 3.0);
-    rays = smoothstep(0.3, 0.7, rays);
-    rays *= smoothstep(1.0, 0.2, uv.y);
-    return rays * wave;
+// Create sharp angular aurora bands
+float auroraBlockyBands(vec2 uv, float time) {
+    // Create stepped horizontal bands
+    float band = floor(uv.y * 6.0 + time * 0.2) / 6.0;
+    
+    // Add blocky distortion
+    float block = blockyNoise(vec2(uv.x * 2.0, band) + time * 0.1);
+    
+    // Sharp transitions
+    band = step(0.3 + block * 0.4, fract(band + uv.x * 0.5));
+    
+    return band;
 }
 
-vec4 renderAuroraComplementary(vec3 viewDir, vec2 skyUV, float time, float dayFactor) {
+// Vertical blocky rays
+float auroraBlockyRays(vec2 uv, float time) {
+    // Grid-based vertical rays
+    vec2 grid = floor(uv * vec2(12.0, 8.0));
+    float ray = rand(grid + time);
+    
+    // Sharp ray edges
+    ray = step(0.6, ray);
+    ray *= step(0.2, fract(uv.y * 10.0 + time));
+    
+    // Fade upward
+    ray *= smoothstep(1.0, 0.2, uv.y);
+    
+    return ray;
+}
+
+// Angular geometric pattern
+float auroraAngular(vec2 uv, float time) {
+    // Create angular/sharp pattern
+    vec2 p = uv * 5.0;
+    
+    // Rotate blocks
+    float angle = time * 0.3;
+    float c = cos(angle);
+    float s = sin(angle);
+    p = mat2(c, -s, s, c) * p;
+    
+    // Grid pattern
+    vec2 grid = abs(fract(p * 0.5) - 0.5);
+    float pattern = max(grid.x, grid.y);
+    
+    // Sharp edges
+    pattern = step(0.3, pattern);
+    pattern *= step(0.2, fract(p.x + p.y + time * 0.5));
+    
+    return pattern;
+}
+
+vec4 renderAuroraBlocky(vec3 viewDir, vec2 skyUV, float time, float dayFactor) {
+    // Only at night
     float nightFactor = smoothstep(0.2, -0.2, dayFactor);
     if (nightFactor < 0.01) return vec4(0.0);
     
-    float viewUp = smoothstep(0.0, 0.6, viewDir.y);
-    vec2 auroraUV = skyUV;
-    auroraUV.x *= 2.0;
+    // Only when looking up
+    float viewUp = smoothstep(0.1, 0.7, viewDir.y);
     
-    float auroraTime = time * NL_AURORA_VELOCITY;
-    float wave = auroraNoise(auroraUV * NL_AURORA_SCALE, auroraTime);
-    float rays = auroraRays(auroraUV, auroraTime, wave);
+    // Map to aurora space
+    vec2 auroraUV = viewDir.xz * 1.2;
+    auroraUV.x *= 1.5;
     
-    float auroraMask = wave * 0.6 + rays * 0.4;
-    auroraMask = smoothstep(0.2, 0.8, auroraMask);
+    float auroraTime = time * NL_AURORA_VELOCITY * 8.0;
     
-    vec3 auroraColor1 = vec3(0.1, 0.9, 0.8);
-    vec3 auroraColor2 = vec3(0.8, 0.2, 0.9);
-    vec3 auroraColor3 = vec3(0.9, 0.3, 0.6);
+    // Generate blocky patterns
+    float bands = auroraBlockyBands(auroraUV * NL_AURORA_SCALE, auroraTime);
+    float rays = auroraBlockyRays(auroraUV * 0.7, auroraTime);
+    float angular = auroraAngular(auroraUV * 1.5, auroraTime * 0.7);
     
-    vec3 finalColor = mix(auroraColor1, auroraColor2, clamp(auroraUV.x + wave, 0.0, 1.0));
-    finalColor = mix(finalColor, auroraColor3, rays);
+    // Combine with sharp blending
+    float auroraMask = max(bands, max(rays * 0.7, angular * 0.5));
+    auroraMask = step(0.4, auroraMask); // Sharp cutoff
     
-    finalColor *= NL_AURORA * auroraMask * nightFactor * viewUp;
-    float glow = auroraMask * nightFactor * viewUp * 0.3;
+    // Blocky colors - cyan, purple, magenta
+    vec3 color1 = vec3(0.0, 1.0, 0.9);   // Bright cyan
+    vec3 color2 = vec3(0.8, 0.0, 1.0);   // Bright purple
+    vec3 color3 = vec3(1.0, 0.2, 0.8);   // Bright magenta
+    
+    // Sharp color transitions
+    vec3 finalColor = mix(color1, color2, step(0.5, auroraUV.x + bands));
+    finalColor = mix(finalColor, color3, rays);
+    
+    // Apply intensity
+    finalColor *= NL_AURORA * 1.5 * auroraMask * nightFactor * viewUp;
+    
+    // Add blocky glow
+    float glow = auroraMask * 0.4 * nightFactor * viewUp;
     finalColor += vec3(0.2, 0.6, 0.5) * glow;
     
     return vec4(finalColor, auroraMask * nightFactor * viewUp);
 }
 
 #endif // NL_AURORA
-
 #endif // SKY_H
