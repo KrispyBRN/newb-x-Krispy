@@ -22,7 +22,7 @@ void main() {
     cloudPos.xz += CameraPosition.xz;
 
     #if NL_CLOUD_TYPE == 2
-        // Rounded Clouds (Raymarching)
+        // Original rounded clouds (raymarching)
         color = renderCloudsRounded(vDir, cloudPos, v_color1.w, v_color2.w, v_color2.rgb, v_color1.rgb, NL_CLOUD_PARAMS(_));
 
         #ifdef NL_CLOUD2_LAYER2
@@ -40,8 +40,8 @@ void main() {
         color.a *= v_color0.a;
 
     #elif NL_CLOUD_TYPE == 3
-        // Realistic Clouds (Voronoi-based)
-        vDir.xz *= 0.3 + v_color0.w; // height parallax
+        // Realistic clouds
+        vDir.xz *= 0.3 + v_color0.w;
         vec2 p = (vDir.xz) / (0.015 + 0.035 * abs(vDir.y));
         p += 0.035 * CameraPosition.xz;
         vec4 clouds = renderClouds(p, v_color2.w, v_color1.w, v_color2.rgb, v_color1.rgb, NL_CLOUD3_SCALE, NL_CLOUD3_SPEED, NL_CLOUD3_SHADOW);
@@ -55,24 +55,58 @@ void main() {
         color.a *= smoothstep(0.0, 0.7, vDir.y);
 
     #elif NL_CLOUD_TYPE == 4
-        // --- KRISPY 2.5D LIGHTWEIGHT CLOUDS ---
-        // Spherical dome projection - no raymarching, ultra fast for mobile
+        // === KRISPY 2.5D ROUNDED CLOUDS ===
+        // Uses cloudDf function (same as Type 2) but sampled on 2.5D dome
+        // This gives 3D-looking clouds without expensive raymarching
+        
+        // 2.5D dome projection
         float perspective = 0.8 / max(vDir.y, 0.001);
         vec2 uv = vDir.xz * perspective;
-
-        // Smooth camera movement so clouds drift naturally with the player
-        uv += CameraPosition.xz * 0.001;
-
-        // Sample the lightweight 2D Voronoi cloud function
-        vec4 clouds = renderClouds(uv, v_color2.w, v_color1.w, v_color2.rgb, v_color1.rgb, NL_CLOUD4_SCALE, NL_CLOUD4_SPEED, NL_CLOUD4_SHADOW);
+        
+        // Add camera movement
+        uv += CameraPosition.xz * NL_CLOUD4_SCALE;
+        
+        // Time animation
+        float time = v_color2.w;
+        float rain = v_color1.w;
+        
+        // Use the SAME cloudDf function as rounded clouds!
+        // But we sample it at a fixed height instead of raymarching
+        vec3 samplePos;
+        samplePos.xz = uv * (1.0 / NL_CLOUD4_SCALE);
+        samplePos.y = 0.5; // Fixed height sample
+        
+        // Sample cloud density at this position
+        float density = cloudDf(samplePos, rain, NL_CLOUD4_SHAPE);
+        
+        // Add secondary layer for depth
+        vec3 samplePos2 = samplePos;
+        samplePos2.xz += NL_CLOUD4_SHADOW_OFFSET * 50.0;
+        float density2 = cloudDf(samplePos2, rain, NL_CLOUD4_SHAPE) * 0.5;
+        
+        // Combine layers
+        float cloudAlpha = density + density2;
+        cloudAlpha = smoothstep(0.15, 0.85, cloudAlpha);
+        
+        // Fade at horizon
+        cloudAlpha *= smoothstep(0.0, 0.4, vDir.y);
+        
+        // Cloud colors (top/bottom gradient like rounded clouds)
+        vec3 horizonCol = v_color2.rgb;
+        vec3 zenithCol = v_color1.rgb;
+        
+        vec4 clouds = vec4(zenithCol + horizonCol, cloudAlpha);
+        
+        // Add lighting (top is brighter)
+        float lighting = 1.0 - samplePos.y * 0.5;
+        clouds.rgb *= lighting;
+        clouds.rgb *= 1.0 - 0.8 * rain;
+        
         color = clouds;
-
-        // Fade out near the horizon for a clean blend with the sky
-        color.a *= smoothstep(0.0, 0.4, vDir.y);
-
+        
         #ifdef NL_AURORA
-            // Aurora scaled to match the 2.5D projection
-            vec2 auroraUV = uv * 34.7;
+            // Aurora still works
+            vec2 auroraUV = vDir.xz * 1.5;
             color += renderAurora(vec3(auroraUV, vDir.y), v_color2.w, v_color1.w, v_dayFactor) * (1.0 - 0.95 * color.a);
         #endif
     #endif
