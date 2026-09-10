@@ -257,4 +257,84 @@ vec3 nlRenderGalaxy(vec3 vdir, vec3 fogColor, nl_environment env, float t) {
 }
 
 
+// ========================================
+// KRISPY COMPLEMENTARY-STYLE AURORA
+// ========================================
+#ifdef NL_AURORA
+
+// Smooth aurora noise using multiple octaves
+float auroraNoise(vec2 uv, float time) {
+    float n = 0.0;
+    
+    // Layer 1: Base wave
+    n += sin(uv.x * 2.0 + time * 0.5) * 0.5 + 0.5;
+    
+    // Layer 2: Detail wave
+    n += sin(uv.x * 3.5 + time * 0.3 + sin(uv.y * 2.0)) * 0.25;
+    
+    // Layer 3: Fine detail
+    n += sin(uv.x * 7.0 + time * 0.7) * 0.125;
+    
+    return n * 0.5; // Normalize
+}
+
+// Vertical aurora rays
+float auroraRays(vec2 uv, float time, float wave) {
+    // Create vertical streaks
+    float rays = sin(uv.y * 15.0 + time * 2.0 + wave * 3.0);
+    rays = smoothstep(0.3, 0.7, rays);
+    
+    // Fade rays upward
+    rays *= smoothstep(1.0, 0.2, uv.y);
+    
+    return rays * wave;
+}
+
+// Main aurora renderer - Complementary style
+vec4 renderAuroraComplementary(vec3 viewDir, vec2 skyUV, float time, float dayFactor) {
+    // Only render at night
+    float nightFactor = smoothstep(0.2, -0.2, dayFactor);
+    if (nightFactor < 0.01) return vec4(0.0);
+    
+    // Aurora only visible when looking up
+    float viewUp = smoothstep(0.0, 0.6, viewDir.y);
+    
+    // Map view direction to aurora UV coordinates
+    vec2 auroraUV = skyUV;
+    auroraUV.x *= 2.0; // Stretch horizontally
+    
+    // Time-based animation
+    float auroraTime = time * NL_AURORA_VELOCITY;
+    
+    // Generate base aurora wave
+    float wave = auroraNoise(auroraUV * NL_AURORA_SCALE, auroraTime);
+    
+    // Add vertical rays
+    float rays = auroraRays(auroraUV, auroraTime, wave);
+    
+    // Combine wave and rays
+    float auroraMask = wave * 0.6 + rays * 0.4;
+    
+    // Smooth the mask
+    auroraMask = smoothstep(0.2, 0.8, auroraMask);
+    
+    // Color gradient: Cyan/Teal to Purple/Pink
+    vec3 auroraColor1 = vec3(0.1, 0.9, 0.8); // Cyan/Teal
+    vec3 auroraColor2 = vec3(0.8, 0.2, 0.9); // Purple
+    vec3 auroraColor3 = vec3(0.9, 0.3, 0.6); // Pink
+    
+    // Mix colors based on position and wave
+    vec3 finalColor = mix(auroraColor1, auroraColor2, auroraUV.x + wave);
+    finalColor = mix(finalColor, auroraColor3, rays);
+    
+    // Apply intensity and fade
+    finalColor *= NL_AURORA * auroraMask * nightFactor * viewUp;
+    
+    // Add glow/bloom effect
+    float glow = auroraMask * nightFactor * viewUp * 0.3;
+    finalColor += vec3(0.2, 0.6, 0.5) * glow;
+    
+    return vec4(finalColor, auroraMask * nightFactor * viewUp);
+}
+
 #endif
