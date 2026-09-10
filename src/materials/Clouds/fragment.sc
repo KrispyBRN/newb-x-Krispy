@@ -56,58 +56,54 @@ void main() {
 
     #elif NL_CLOUD_TYPE == 4
         // === KRISPY 2.5D ROUNDED CLOUDS ===
-        // Uses cloudDf function (same as Type 2) but sampled on 2.5D dome
-        // This gives 3D-looking clouds without expensive raymarching
+        // Uses the exact same cloudDf function as Type 2, but sampled on a 2.5D dome.
+        // This gives beautiful 3D-looking clouds without the heavy raymarching performance cost!
         
-        // 2.5D dome projection
+        // 1. 2.5D Dome Projection
         float perspective = 0.8 / max(vDir.y, 0.001);
         vec2 uv = vDir.xz * perspective;
         
-        // Add camera movement
-        uv += CameraPosition.xz * NL_CLOUD4_SCALE;
-        
-        // Time animation
+        // 2. Time and rain factors
         float time = v_color2.w;
         float rain = v_color1.w;
         
-        // Use the SAME cloudDf function as rounded clouds!
-        // But we sample it at a fixed height instead of raymarching
+        // 3. Sample position on the dome (fixed height to avoid raymarching loop)
+        // FIXED: Proper vec2 division to prevent compilation error
         vec3 samplePos;
-        samplePos.xz = uv * (1.0 / NL_CLOUD4_SCALE);
-        samplePos.y = 0.5; // Fixed height sample
+        samplePos.xz = (uv + CameraPosition.xz * 0.01) / NL_CLOUD4_SCALE; 
+        samplePos.y = 0.5; 
         
-        // Sample cloud density at this position
+        // 4. Use the exact same cloudDf function as rounded clouds!
         float density = cloudDf(samplePos, rain, NL_CLOUD4_SHAPE);
         
-        // Add secondary layer for depth
+        // 5. Add secondary layer for depth (shadow offset)
         vec3 samplePos2 = samplePos;
         samplePos2.xz += NL_CLOUD4_SHADOW_OFFSET * 50.0;
         float density2 = cloudDf(samplePos2, rain, NL_CLOUD4_SHAPE) * 0.5;
         
-        // Combine layers
+        // 6. Combine layers and smooth
         float cloudAlpha = density + density2;
         cloudAlpha = smoothstep(0.15, 0.85, cloudAlpha);
         
-        // Fade at horizon
+        // 7. Fade at horizon for a clean blend
         cloudAlpha *= smoothstep(0.0, 0.4, vDir.y);
         
-        // Cloud colors (top/bottom gradient like rounded clouds)
+        // 8. Cloud colors and lighting
         vec3 horizonCol = v_color2.rgb;
         vec3 zenithCol = v_color1.rgb;
-        
         vec4 clouds = vec4(zenithCol + horizonCol, cloudAlpha);
         
-        // Add lighting (top is brighter)
         float lighting = 1.0 - samplePos.y * 0.5;
         clouds.rgb *= lighting;
         clouds.rgb *= 1.0 - 0.8 * rain;
         
         color = clouds;
-        
+        color.a *= v_color0.a;
+
         #ifdef NL_AURORA
-            // Aurora still works
+            // Keep original aurora working in the background
             vec2 auroraUV = vDir.xz * 1.5;
-            color += renderAurora(vec3(auroraUV, vDir.y), v_color2.w, v_color1.w, v_dayFactor) * (1.0 - 0.95 * color.a);
+            color.rgb += renderAurora(vec3(auroraUV, vDir.y), time, rain, v_dayFactor).rgb * (1.0 - color.a);
         #endif
     #endif
 
