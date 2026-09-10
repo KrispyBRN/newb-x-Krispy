@@ -98,6 +98,11 @@
 #define NL_GLOW_SHIMMER_SPEED 0.9 // 0.5 slow - 2.0 fast
 //#define NL_GLOW_LEAK 0.6        // [toggle] 0.08 subtle ~ 1.0 100% brightness of NL_GLOW_TEX
 
+/* Torch bloom */
+#define NL_TORCH_BLOOM_STRENGTH 0.35  // 0.0 no bloom ~ 1.0 strong bloom
+#define NL_TORCH_BLOOM_THRESHOLD 0.25 // 0.0 all blocks ~ 1.0 only brightest
+#define NL_TORCH_BLOOM_COLOR vec3(1.0, 0.6, 0.25) // Warm yellow-orange glow
+
 /* Waving */
 #define NL_PLANTS_WAVE 0.05    // [toggle] 0.02 gentle ~ 0.4 violent
 #define NL_LANTERN_WAVE 0.16   // [toggle] 0.05 subtle ~ 0.4 large swing
