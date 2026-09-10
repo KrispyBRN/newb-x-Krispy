@@ -23,7 +23,7 @@ vec4 renderBlackhole(vec3 vdir, float t) {
     // Rule 4: Use mul() for safe cross-platform matrix math
     vr.xy = mul(mat2(cos(r), -sin(r), sin(r), cos(r)), vr.xy);
     
-    vec3 vd = vr - vec3(0.0, -1.0, 0.0);
+    vec3 vd = vr - vec3(0.0, 2.0, 0.0);
     float nl = sin(15.0 * vd.x + t) * sin(15.0 * vd.y - t) * sin(15.0 * vd.z + t);
     float a = atan(vd.x, vd.z);
     
