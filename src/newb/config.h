@@ -122,7 +122,7 @@
 #define NL_UNDERWATER_TINT vec3(0.9,1.0,0.9) // fog tint color when underwater
 
 /* Cloud type */
-#define NL_CLOUD_TYPE 1 // 0:vanilla, 1:soft, 2:rounded, 3:realistic
+#define NL_CLOUD_TYPE 4 // 0:vanilla, 1:soft, 2:rounded, 3:realistic, 4:Krispy 2.5D Lightweight
 
 /* Vanilla cloud settings - make sure to remove clouds.png when using this */
 #define NL_CLOUD0_THICKNESS 2.1      // 0.5 slim ~ 8.0 fat
@@ -160,6 +160,12 @@
 #define NL_CLOUD3_SPEED 0.005            // 0.0 static ~ 4.0 fast moving
 #define NL_CLOUD3_SHADOW 0.9             // 0.1 subtle ~ 1.0 dark
 #define NL_CLOUD3_SHADOW_OFFSET 0.3      // 0.05 minimal ~ 1.0 large
+
+/* Krispy 2.5D Lightweight Clouds */
+#define NL_CLOUD4_SCALE vec2(0.025, 0.025) // 0.005 large ~ 0.1 tiny
+#define NL_CLOUD4_SPEED 0.03               // 0.0 static ~ 0.1 fast moving
+#define NL_CLOUD4_SHADOW 0.6               // 0.1 subtle ~ 1.0 dark shadow
+#define NL_CLOUD4_SHADOW_OFFSET 0.2        // 0.05 minimal ~ 1.0 large
 
 /* Aurora settings */
 #define NL_AURORA 1.2           // [toggle] 0.4 dim ~ 4.0 very bright
