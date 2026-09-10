@@ -254,4 +254,6 @@ vec4 renderAuroraComplementary(vec3 viewDir, vec2 worldXZ, float time, float day
     return vec4(finalColor, auroraMask);
 }
 
-#endif // SKY_H
+   #endif // NL_AURORA
+
+   #endif // SKY_H
