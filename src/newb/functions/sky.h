@@ -210,39 +210,37 @@ vec3 nlRenderGalaxy(vec3 vdir, vec3 fogColor, nl_environment env, float t) {
 
 // ========================================
 // KRISPY SMOOTH AURORA (Complementary Style)
-// Strictly BGFX Compliant
 // ========================================
 #ifdef NL_AURORA
 
 vec4 renderAuroraComplementary(vec3 viewDir, vec2 worldXZ, float time, float dayFactor) {
-    // Rule 6: Dynamic environment awareness (only show at night)
+    // Only show at night
     float nightFactor = smoothstep(0.2, -0.2, dayFactor);
     if (nightFactor < 0.01) return vec4(0.0);
     
     float viewUp = smoothstep(0.0, 0.5, viewDir.y);
     
-    // Rule 5: World space conversion (NO gl_FragCoord!)
-    // Pin the texture to the 3D world ceiling so it stays in the sky when you turn
-    vec2 auroraUV = worldXZ * 0.005; 
-    auroraUV.x *= 1.3;
+    // World space conversion
+    vec2 auroraUV = worldXZ * 2.0; 
+    auroraUV.x *= 1.5;
     
-    // Rule 2: Time is passed as a float extracted from the vec4 uniform
+    // Time animation
     float auroraTime = time * NL_AURORA_VELOCITY * 3.0;
     
-    // Smooth layered waves (Complementary style)
+    // Smooth layered waves
     float wave1 = sin(auroraUV.x * 3.0 + auroraTime + sin(auroraUV.y * 2.0) * 0.5);
     float wave2 = sin(auroraUV.x * 5.0 - auroraTime * 0.7 + sin(auroraUV.y * 3.0) * 0.3);
     float wave = (wave1 * 0.5 + wave2 * 0.3);
     wave = smoothstep(-0.5, 0.8, wave);
     
     // Vertical rays
-    float rays = sin(auroraUV.y * 20.0 + auroraTime * 2.0 + wave1 * 2.0);
+    float rays = sin(auroraUV.y * 8.0 + auroraTime * 1.5 + wave1 * 3.0);
     rays = smoothstep(0.4, 0.9, rays) * smoothstep(1.0, 0.3, auroraUV.y);
     
     // Combine
     float auroraMask = (wave * 0.7 + rays * 0.3) * nightFactor * viewUp;
     
-    // Rule 6: Vibrant colors that pop against the dynamic night sky
+    // Vibrant colors
     vec3 color1 = vec3(0.1, 0.95, 0.85);  // Cyan/Teal
     vec3 color2 = vec3(0.85, 0.2, 0.95);  // Purple
     vec3 finalColor = mix(color1, color2, auroraUV.x * 0.5 + wave * 0.3);
@@ -254,6 +252,6 @@ vec4 renderAuroraComplementary(vec3 viewDir, vec2 worldXZ, float time, float day
     return vec4(finalColor, auroraMask);
 }
 
-   #endif // NL_AURORA
+#endif // NL_AURORA
 
-   #endif // SKY_H
+#endif // SKY_H
