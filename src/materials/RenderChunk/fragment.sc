@@ -26,7 +26,16 @@ void main() {
     diffuse.rgb *= mix(vec3(1.0,1.0,1.0), texture2D(s_SeasonsTexture, v_color1.xy).rgb * 2.0, v_color1.z);
   #endif
 
-  vec3 glow = nlGlow(s_MatTexture, v_texcoord0, v_extra.a);
+    vec3 glow = nlGlow(s_MatTexture, v_texcoord0, v_extra.a);
+
+  // === FAKE BLOOM EFFECT FOR TORCHES ===
+  #ifdef NL_TORCH_BLOOM
+    float glowAmount = max(glow.r, max(glow.g, glow.b));
+    float bloom = max(0.0, glowAmount - NL_TORCH_BLOOM_THRESHOLD) * 2.0;
+    
+    // Add warm bloom glow to the existing glow
+    glow += NL_TORCH_BLOOM_COLOR * bloom * NL_TORCH_BLOOM_STRENGTH;
+  #endif
 
   diffuse.rgb *= diffuse.rgb;
 
