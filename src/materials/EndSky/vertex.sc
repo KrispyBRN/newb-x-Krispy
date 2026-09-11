@@ -7,6 +7,7 @@ $output v_posTime, v_texcoord0
 #include <bgfx_shader.sh>
 #include <newb/main.sh>
 
+//uniform vec4 FogColor;
 uniform vec4 ViewPositionAndTime;
 
 void main() {
@@ -18,10 +19,10 @@ void main() {
 
   vec3 pos = mul(model, vec4(a_position, 1.0)).xyz;
 
-  // Slow rotation for the skybox (one complete rotation per hour)
+  // pi/1800 (one complete rotation per hour)
   highp float t = 0.00174532925 * ViewPositionAndTime.w;
 
-  // Safe manual 2D rotation for the X and Z axes
+  // FIXED: Safe manual 2D rotation for the X and Z axes
   float sinA = sin(t);
   float cosA = cos(t);
   
@@ -34,7 +35,7 @@ void main() {
   vec3 wPos = pos;
   wPos.xz = -wPos.xz;
 
-  v_texcoord0 = 2.0 * a_texcoord0; 
+  v_texcoord0 = 2.0 * a_texcoord0; // Keep an eye on this if textures look stretched/tiled
   v_posTime = vec4(wPos, ViewPositionAndTime.w);
   gl_Position = mul(u_viewProj, vec4(pos, 1.0));
 }
