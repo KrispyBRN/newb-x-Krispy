@@ -18,7 +18,6 @@ vec4 renderBlackhole(vec3 vdir, float t) {
     
     float r = 2.4;
     vec3 vr = vdir;
-    // Rule 4: Use mul() for safe cross-platform matrix math
     vr.xy = mul(mat2(cos(r), -sin(r), sin(r), cos(r)), vr.xy);
     
     vec3 vd = vr - vec3(0.0, 2.0, 0.0);
@@ -49,17 +48,16 @@ void main() {
   #ifndef INSTANCING
     vec4 diffuse = texture2D(s_SkyTexture, v_texcoord0);
 
-    // Extract view direction and time from v_posTime (Rule 2 compliant)
+    // Extract view direction and time from v_posTime
     vec3 viewDir = normalize(v_posTime.xyz);
     float t = v_posTime.w;
 
-    // 1. Base End Sky (Newb-X default purple streaks)
     vec3 color = renderEndSky(getEndHorizonCol(), getEndZenithCol(), viewDir, t);
     
-    // 2. Add vanilla End stars
+    // Add vanilla End stars
     color += 2.8 * diffuse.rgb; 
 
-    // 3. Blend Blackhole over the base End sky
+    // Blend Blackhole over the base End sky
     #ifdef NL_BLACKHOLE
         vec4 bh = renderBlackhole(viewDir, t);
         color *= bh.a;   // Absorb light in the center (the void)
