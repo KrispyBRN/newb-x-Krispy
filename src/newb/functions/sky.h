@@ -101,7 +101,7 @@ vec3 renderOverworldSky(nl_skycolor skyCol, nl_environment env, vec3 viewDir, bo
         float source = max(0.0, (mg8-0.22)/0.78);
         source *= source;
         source *= source;
-        sky *= 1.0+15.0*source*(1.0-env.rainFactor);
+        sky *= 1.0+5.0*source*(1.0-env.rainFactor);
     }
 #ifdef NL_RAINBOW
     if (!env.underwater) {
