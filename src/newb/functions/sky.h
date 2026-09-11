@@ -10,7 +10,6 @@ struct nl_skycolor {
     vec3 horizonEdge;
 };
 
-// rainbow spectrum
 vec3 spectrum(float x) {
     vec3 s = vec3(x-0.5, x, x+0.5);
     s = smoothstep(1.0, 0.0, abs(s));
@@ -148,7 +147,6 @@ vec3 nlRenderSky(nl_skycolor skycol, nl_environment env, vec3 viewDir, float t, 
     return sky;
 }
 
-// shooting star
 vec3 nlRenderShootingStar(vec3 viewDir, vec3 FOG_COLOR, float t) {
     float h = t / (NL_SHOOTING_STAR_DELAY+NL_SHOOTING_STAR_PERIOD);
     float h0 = floor(h);
@@ -177,7 +175,6 @@ vec3 nlRenderShootingStar(vec3 viewDir, vec3 FOG_COLOR, float t) {
     return s*vec3(0.8, 0.9, 1.0);
 }
 
-// Galaxy stars
 vec3 nlRenderGalaxy(vec3 vdir, vec3 fogColor, nl_environment env, float t) {
     if (env.underwater) {
         return vec3_splat(0.0);
@@ -208,68 +205,30 @@ vec3 nlRenderGalaxy(vec3 vdir, vec3 fogColor, nl_environment env, float t) {
     return stars*(1.0-env.rainFactor);
 }
 
-// ========================================
-// Aurora but i rewrite it lol
-// ========================================
-#ifdef NL_AURORA
+#ifdef NL_SKY_AURORA
 
-vec4 renderAuroraComplementary(vec3 viewDir, vec2 worldXZ, float time, float dayFactor) {
-    // Only show at night
-    float nightFactor = smoothstep(0.2, -0.2, dayFactor);
-    if (nightFactor < 0.01) return vec4(0.0);
-    
-    // Only visible when looking up
-    float viewUp = smoothstep(0.1, 0.8, viewDir.y);
-    if (viewUp < 0.01) return vec4(0.0);
-    
-    float auroraTime = time * NL_AURORA_VELOCITY;
-    
-    // Convert view direction to spherical coordinates for proper sky mapping
-    float azimuth = atan(viewDir.z, viewDir.x);
+vec3 nlRenderAurora(vec3 viewDir, float t, float dayFactor) {
+    float nightFactor = smoothstep(0.1, -0.15, dayFactor);
+    if (nightFactor < 0.01 || viewDir.y < 0.0) return vec3_splat(0.0);
+
+    t *= NL_SKY_AURORA_SPEED;
+
+    float azimuth = atan2(viewDir.x, viewDir.z);
     float elevation = viewDir.y;
-    
-    // Create aurora band position in the sky (northern lights style)
-    float auroraBand = 0.6; // Height in the sky
-    float bandWidth = 0.3;
-    
-    // Distance from aurora band center
-    float distFromBand = abs(elevation - auroraBand);
-    float bandMask = 1.0 - smoothstep(0.0, bandWidth, distFromBand);
-    
-    // Create flowing wave patterns along the band
-    float wave1 = sin(azimuth * 3.0 + auroraTime * 0.5);
-    float wave2 = sin(azimuth * 5.0 - auroraTime * 0.3);
-    float wave3 = sin(azimuth * 2.0 + auroraTime * 0.2 + wave1 * 0.5);
-    
-    float mainWave = wave1 * 0.5 + wave2 * 0.3 + wave3 * 0.2;
-    mainWave = smoothstep(-0.5, 0.8, mainWave);
-    
-    // Vertical curtain rays (THE KEY FEATURE!)
-    float rayFreq = 15.0;
-    float ray1 = sin(elevation * rayFreq + auroraTime * 1.5 + wave1 * 2.0);
-    float ray2 = sin(elevation * (rayFreq * 0.7) - auroraTime * 0.8 + wave2 * 1.5);
-    float rays = ray1 * 0.6 + ray2 * 0.4;
-    rays = smoothstep(0.3, 0.9, rays);
-    
-    // Combine band, waves, and rays
-    float auroraMask = mainWave * bandMask * 0.6 + rays * bandMask * 0.4;
-    auroraMask *= nightFactor * viewUp;
-    auroraMask = clamp(auroraMask, 0.0, 1.0);
-    
-    // Smooth color gradient (cyan → purple → pink like reference)
-    vec3 color1 = vec3(0.2, 0.95, 0.9);   // Bright cyan/teal
-    vec3 color2 = vec3(0.6, 0.3, 0.95);   // Purple
-    vec3 color3 = vec3(0.95, 0.4, 0.7);   // Pink/magenta
-    
-    // Mix colors based on wave intensity and position
-    vec3 finalColor = mix(color1, color2, mainWave * 0.5 + azimuth * 0.2);
-    finalColor = mix(finalColor, color3, rays * 0.6);
-    
-    // Apply intensity and glow
-    finalColor *= NL_AURORA * 2.0 * auroraMask;
-    finalColor += vec3(0.3, 0.6, 0.6) * auroraMask * 0.3;
-    
-    return vec4(finalColor, auroraMask);
+
+    float curtain = sin(azimuth*7.0 + elevation*4.0 + t);
+    curtain += 0.6*sin(azimuth*13.0 - elevation*6.0 - t*1.4);
+    curtain += 0.35*sin(azimuth*21.0 + elevation*2.0 + t*0.6);
+    curtain = clamp(curtain*0.4+0.5, 0.0, 1.0);
+
+    float band = smoothstep(0.0, 0.35, elevation)*smoothstep(1.0, 0.35, elevation);
+    float rays = pow(curtain, 2.5);
+    float intensity = rays*band;
+
+    vec3 col = mix(NL_SKY_AURORA_COLOR2, NL_SKY_AURORA_COLOR, curtain);
+    col *= intensity*nightFactor*NL_SKY_AURORA_BRIGHTNESS;
+
+    return col;
 }
 
 #endif
