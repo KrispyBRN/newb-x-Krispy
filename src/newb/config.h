@@ -174,7 +174,7 @@
 #define NL_CLOUD4_SHADOW_OFFSET 0.2        // 0.05 minimal ~ 1.0 large
 
 /* Aurora settings */
-#define NL_AURORA 1.2           // [toggle] 0.4 dim ~ 4.0 very bright
+//#define NL_AURORA 1.2           // [toggle] 0.4 dim ~ 4.0 very bright
 #define NL_AURORA_VELOCITY 0.03 // 0.0 static ~ 0.3 very fast
 #define NL_AURORA_SCALE 0.04    // 0.002 large ~ 0.4 tiny
 #define NL_AURORA_WIDTH 0.18    // 0.04 thin line ~ 0.4 thick lines
@@ -182,6 +182,13 @@
 #define NL_AURORA_COL2 vec3(0.1,0.0,1.0)
 
 #define NL_CLOUD_AURORA_REFLECTION // [toggle] simple clouds/aurora reflection
+
+/* Maybe a complementary styled Aurora  */
+#define NL_SKY_AURORA                    // [toggle] enable 3D aurora curtains
+#define NL_SKY_AURORA_SPEED 0.04         // 0.01 slow ~ 0.2 fast movement
+#define NL_SKY_AURORA_BRIGHTNESS 1.5     // 0.5 dim ~ 3.0 bright
+#define NL_SKY_AURORA_COLOR vec3(0.1, 0.95, 0.85)    // Primary color (Cyan/Teal)
+#define NL_SKY_AURORA_COLOR2 vec3(0.85, 0.2, 0.95)   // Secondary color (Purple)
 
 /* Shooting star */
 #define NL_SHOOTING_STAR 1.0        // [toggle] 0.2 dim ~ 1.0 bright
