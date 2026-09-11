@@ -36,12 +36,12 @@ void main() {
       skyColor += NL_GALAXY_STARS*nlRenderGalaxy(viewDir, env.fogCol, env, v_underwaterRainTimeDay.z);
     #endif
 
-    // === KRISPY COMPLEMENTARY AURORA ===
+    // === COMPLEMENTARY AURORA ===
     #ifdef NL_AURORA
-      if (!env.underwater && !env.end && !env.nether) {
-        vec4 aurora = renderAuroraComplementary(viewDir, viewDir.xz, v_underwaterRainTimeDay.z, env.dayFactor);
-        skyColor += aurora.rgb;
-      }
+    if (!env.underwater && !env.end && !env.nether) {
+    vec4 aurora = renderAuroraComplementary(-viewDir, vec2(0.0), v_underwaterRainTimeDay.z, env.dayFactor);
+    skyColor += aurora.rgb;
+    }
     #endif
 
     skyColor = colorCorrection(skyColor);
