@@ -10,10 +10,8 @@ $input v_texcoord0, v_posTime
   SAMPLER2D_AUTOREG(s_SkyTexture);
 #endif
 
-// ========================================
-// BLACKHOLE SKYBOX (End Dimension Only)
-// Author: devendrn, License: CC BY-SA 4.0
-// ========================================
+//blackhole
+
 #ifdef NL_BLACKHOLE
 vec4 renderBlackhole(vec3 vdir, float t) {
     t *= NL_BH_SPEED;
