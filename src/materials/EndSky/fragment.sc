@@ -10,7 +10,8 @@ $input v_texcoord0, v_posTime
   SAMPLER2D_AUTOREG(s_SkyTexture);
 #endif
 
-// BLACKHOLE
+//blackhole
+
 #ifdef NL_BLACKHOLE
 vec4 renderBlackhole(vec3 vdir, float t) {
     t *= NL_BH_SPEED;
@@ -18,7 +19,7 @@ vec4 renderBlackhole(vec3 vdir, float t) {
     float r = 2.4;
     vec3 vr = vdir;
     
-    // Safe manual 2D rotation for cross-platform bgfx compatibility
+    // FIXED: Safe manual 2D rotation for cross-platform bgfx compatibility
     float cr = cos(r);
     float sr = sin(r);
     vr.xy = vec2(vr.x * cr - vr.y * sr, vr.x * sr + vr.y * cr);
@@ -26,7 +27,7 @@ vec4 renderBlackhole(vec3 vdir, float t) {
     // Offset the black hole position up into the sky so it's visible
     vec3 vd = vr - vec3(0.0, 2.0, 0.0);
     float nl = sin(15.0 * vd.x + t) * sin(15.0 * vd.y - t) * sin(15.0 * vd.z + t);
-    float a = atan2(vd.z, vd.x); // Standard atan2 layout for stable angle tracking
+    float a = atan2(vd.z, vd.x); // Fixed: Standard atan2 layout for stable angle tracking
     
     float d = NL_BH_DIST * length(vd + 0.003 * nl);
     float d0 = (0.6 - d) / 0.6;
@@ -53,10 +54,11 @@ void main() {
     vec4 diffuse = texture2D(s_SkyTexture, v_texcoord0);
 
     // Extract the raw layout values from the vertex shader packet
+    // v_posTime.xyz is the rotated world position of the skybox vertex
     vec3 viewDir = normalize(v_posTime.xyz);
     float t = v_posTime.w;
-
-    // Build the default Newb base sky for The End
+    
+     // Build the default Newb base sky for The End
     vec3 color = renderEndSky(getEndHorizonCol(), getEndZenithCol(), viewDir, t);
     
     // Add the native cloud texture overlays over the horizon
