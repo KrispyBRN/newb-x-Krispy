@@ -18,11 +18,16 @@ vec4 renderBlackhole(vec3 vdir, float t) {
     
     float r = 2.4;
     vec3 vr = vdir;
-    vr.xy = mul(mat2(cos(r), -sin(r), sin(r), cos(r)), vr.xy);
     
+    // FIXED: Safe manual 2D rotation for cross-platform bgfx compatibility
+    float cr = cos(r);
+    float sr = sin(r);
+    vr.xy = vec2(vr.x * cr - vr.y * sr, vr.x * sr + vr.y * cr);
+    
+    // Offset the black hole position up into the sky so it's visible
     vec3 vd = vr - vec3(0.0, 2.0, 0.0);
     float nl = sin(15.0 * vd.x + t) * sin(15.0 * vd.y - t) * sin(15.0 * vd.z + t);
-    float a = atan(vd.x, vd.z);
+    float a = atan2(vd.z, vd.x); // Fixed: Standard atan2 layout for stable angle tracking
     
     float d = NL_BH_DIST * length(vd + 0.003 * nl);
     float d0 = (0.6 - d) / 0.6;
@@ -48,26 +53,30 @@ void main() {
   #ifndef INSTANCING
     vec4 diffuse = texture2D(s_SkyTexture, v_texcoord0);
 
-    // Extract view direction and time from v_posTime
+    // Extract the raw layout values from the vertex shader packet
+    // v_posTime.xyz is the rotated world position of the skybox vertex
     vec3 viewDir = normalize(v_posTime.xyz);
     float t = v_posTime.w;
 
+// Build the default Newb base sky for The End
     vec3 color = renderEndSky(getEndHorizonCol(), getEndZenithCol(), viewDir, t);
     
-    // Add vanilla End stars
+    // Add the native cloud texture overlays over the horizon
     color += 2.8 * diffuse.rgb; 
 
-    // Blend Blackhole over the base End sky
+    // Blend Blackhole mathematical layer over the base sky box
     #ifdef NL_BLACKHOLE
         vec4 bh = renderBlackhole(viewDir, t);
-        color *= bh.a;   // Absorb light in the center (the void)
-        color += bh.rgb; // Add the glowing accretion ring
+        color *= bh.a;   // Absorb light in the center (forces black singularity)
+        color += bh.rgb; // Add the burning outer accretion disk
     #endif
 
+    // Run final color mapping and tone correction configuration
     color = colorCorrection(color);
 
     gl_FragColor = vec4(color, 1.0);
   #else
+    // Instanced geometry drops draw buffer execution
     gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
   #endif
 }
