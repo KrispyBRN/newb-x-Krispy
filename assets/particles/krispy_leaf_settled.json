@@ -1,0 +1,52 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "krispy:leaf_settled",
+      "basic_render_parameters": {
+        "material": "particles_alpha",
+        "texture": "textures/particle/biome_tinted_leaves_atlas"
+      }
+    },
+    "components": {
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
+      },
+      "minecraft:emitter_lifetime_once": {
+        "active_time": 0.05
+      },
+      "minecraft:emitter_shape_point": {
+        "offset": [0.0, 0.01, 0.0]
+      },
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "20.0 + Math.random(0.0, 15.0)"
+      },
+      "minecraft:particle_initial_spin": {
+        "rotation": "Math.random(0, 360)"
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [0.1, 0.1],
+        "facing_camera_mode": "rotate_y",
+        "uv": {
+          "texture_width": 28,
+          "texture_height": 21,
+          "uv": [
+            "7.0*Math.floor(variable.emitter_random_2*4.0)",
+            "7.0*Math.floor(variable.emitter_random_3*3.0)"
+          ],
+          "uv_size": [7, 7]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": {
+          "gradient": [
+            { "0.0": "#FF7CB342" },
+            { "0.75": "#FFC7862E" },
+            { "1.0": "#00C7862E" }
+          ],
+          "interpolant": "variable.particle_age / variable.particle_lifetime"
+        }
+      }
+    }
+  }
+}

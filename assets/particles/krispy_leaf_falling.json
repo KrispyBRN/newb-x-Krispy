@@ -1,0 +1,77 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "krispy:leaf_falling",
+      "basic_render_parameters": {
+        "material": "particles_alpha",
+        "texture": "textures/particle/biome_tinted_leaves_atlas"
+      }
+    },
+    "components": {
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
+      },
+      "minecraft:emitter_lifetime_once": {
+        "active_time": 0.05
+      },
+      "minecraft:emitter_shape_point": {
+        "offset": [0.0, 0.0, 0.0],
+        "direction": [0, -1, 0]
+      },
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": 8.0
+      },
+      "minecraft:particle_initial_speed": 0.03,
+      "minecraft:particle_motion_dynamic": {
+        "linear_acceleration": [0, -0.3, 0],
+        "linear_drag_coefficient": 1.1,
+        "rotation_drag_coefficient": 0.2
+      },
+      "minecraft:particle_motion_collision": {
+        "enabled": 1,
+        "collision_radius": 0.05,
+        "collision_drag": 3.0,
+        "coefficient_of_restitution": 0.0,
+        "expire_on_contact": true,
+        "events": [
+          { "event": "on_land" }
+        ]
+      },
+      "minecraft:particle_initial_spin": {
+        "rotation": "Math.random(0, 360)",
+        "rotation_rate": "Math.random(-60, 60)"
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [0.1, 0.1],
+        "facing_camera_mode": "lookat_xyz",
+        "uv": {
+          "texture_width": 28,
+          "texture_height": 21,
+          "uv": [
+            "7.0*Math.floor(variable.emitter_random_2*4.0)",
+            "7.0*Math.floor(variable.emitter_random_3*3.0)"
+          ],
+          "uv_size": [7, 7]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": {
+          "gradient": [
+            { "0.0": "#FF7CB342" },
+            { "1.0": "#FFC7862E" }
+          ],
+          "interpolant": "variable.emitter_random_1"
+        }
+      }
+    },
+    "events": {
+      "on_land": {
+        "particle_effect": {
+          "effect": "krispy:leaf_settled",
+          "type": "particle"
+        }
+      }
+    }
+  }
+}
