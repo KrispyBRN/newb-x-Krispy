@@ -26,21 +26,19 @@ void main() {
 
     nl_skycolor skycol = nlOverworldSkyColors(env);
 
-        vec3 skyColor = nlRenderSky(skycol, env, -viewDir, v_underwaterRainTimeDay.z, true);
-    
+    vec3 skyColor = nlRenderSky(skycol, env, -viewDir, v_underwaterRainTimeDay.z, true);
+
     #ifdef NL_SHOOTING_STAR
       skyColor += NL_SHOOTING_STAR*nlRenderShootingStar(viewDir, env.fogCol, v_underwaterRainTimeDay.z);
     #endif
-    
+
     #ifdef NL_GALAXY_STARS
       skyColor += NL_GALAXY_STARS*nlRenderGalaxy(viewDir, env.fogCol, env, v_underwaterRainTimeDay.z);
     #endif
 
-    // === COMPLEMENTARY AURORA ===
-    #ifdef NL_AURORA
+    #ifdef NL_SKY_AURORA
     if (!env.underwater && !env.end && !env.nether) {
-    vec4 aurora = renderAuroraComplementary(-viewDir, vec2(0.0), v_underwaterRainTimeDay.z, env.dayFactor);
-    skyColor += aurora.rgb;
+      skyColor += nlRenderAurora(viewDir, v_underwaterRainTimeDay.z, env.dayFactor);
     }
     #endif
 
